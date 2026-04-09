@@ -12,31 +12,10 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// COMBINED METADATA BLOCK
 export const metadata: Metadata = {
   title: "KitchenAll Pro",
   description: "Professional Culinary Management System",
-};
-
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-      // This prop tells Next.js to ignore attribute mismatches caused by 
-      // browser extensions like Grammarly or Google Translate.
-      suppressHydrationWarning
-    >
-      <body className="min-h-full flex flex-col">
-        {children}
-      </body>
-    </html>
-  );
-}
-export const metadata = {
   metadataBase: new URL('https://kitchenall.co.ke'),
   alternates: {
     canonical: '/',
@@ -58,3 +37,21 @@ export const metadata = {
     },
   },
 };
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html
+      lang="en"
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
+    >
+      <body className="min-h-full flex flex-col">
+        {children}
+      </body>
+    </html>
+  );
+}
