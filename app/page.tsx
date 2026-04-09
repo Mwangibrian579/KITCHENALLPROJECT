@@ -13,13 +13,13 @@ import 'swiper/css/pagination';
 import 'swiper/css/navigation';
 
 /** --- CUSTOM ICON COMPONENTS --- */
-const WhatsAppIcon = ({ size = 16, className = "" }: { size?: number; className?: string }) => (
+const WhatsAppIcon = ({ size = 16, className = "" }: { size?: number, className?: string }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
     <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
   </svg>
 );
 
-/** --- DATA & TYPES --- */
+/** --- TYPES --- */
 interface Product {
   id: number;
   name: string;
@@ -30,39 +30,18 @@ interface Product {
   image: string;
   image_url?: string;
   description: string;
-  isNew?: boolean;
 }
 
 const navCategories = [
   {
     name: "Cooking",
     image: "https://i.pinimg.com/1200x/11/0b/a7/110ba7b68db31ac7a3e63f590f2aa913.jpg",
-    subcategories: ["Bakery Appliances", "Burners/Jikos/Stoves", "Cooking Appliances", "Small Appliances"],
-    keywords: ["cooking", "cook", "oven", "stove", "burner", "bakery", "jiko"]
+    keywords: ["cooking", "oven", "stove", "burner", "bakery"]
   },
   {
     name: "Refrigeration",
     image: "https://i.pinimg.com/736x/56/33/df/5633df68778b34c7b5fe078512e6753d.jpg",
-    subcategories: ["Large Appliances", "Hotel Appliances", "Office Kitchen"],
-    keywords: ["refrigeration", "fridge", "freezer", "cooler", "chiller", "cold"]
-  },
-  {
-    name: "Food Prep",
-    image: "https://i.pinimg.com/1200x/b9/83/5f/b9835f67efc8ecedea802e69e7d07626.jpg",
-    subcategories: ["Butchery Equipment", "Food Processors", "Measuring Tools/Scales", "Home Kitchen"],
-    keywords: ["food prep", "processor", "mixer", "butchery", "scale", "measuring", "blender"]
-  },
-  {
-    name: "Stainless Steel",
-    image: "https://i.pinimg.com/736x/fd/2f/84/fd2f84c85fbb01d8c01f46badefc8080.jpg",
-    subcategories: ["Juakali Fabrications", "Hotel Appliances"],
-    keywords: ["stainless", "steel", "fabrication", "sink", "table", "counter"]
-  },
-  {
-    name: "Medical & Institutional",
-    image: "https://i.pinimg.com/736x/48/22/33/48223336e24e08a40df942d3a7e08395.jpg",
-    subcategories: ["Mortuary Equipment", "Hospital Utility", "Cleaning Sanitation"],
-    keywords: ["medical", "hospital", "mortuary", "institutional", "sanitation", "cleaning"]
+    keywords: ["refrigeration", "fridge", "freezer", "cooler"]
   }
 ];
 
@@ -70,30 +49,17 @@ export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [cart, setCart] = useState<Product[]>([]);
-  const [isCartOpen, setIsCartOpen] = useState(false);
-  const [userName, setUserName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
-  
+  const [isScrolled, setIsScrolled] = useState(false);
   const mainContentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const savedName = localStorage.getItem('user_name');
-    if (savedName) setUserName(savedName);
-
     const fetchProducts = async () => {
       setLoading(true);
       try {
         const response = await fetch('http://127.0.0.1:8000/api/products');
-        // FIX: Assert data as Product array
         const data = (await response.json()) as Product[];
         setProducts(data);
-        
-        // FIX: Extracting unique categories correctly
-        const uniqueCategories = [...new Set(data.map((p: Product) => p.category))];
-        setAvailableCategories(uniqueCategories);
-        
       } catch (err) {
         console.error("Backend Connection Error:", err);
       } finally {
@@ -101,58 +67,72 @@ export default function Home() {
       }
     };
     fetchProducts();
-  }, []);
 
-  /** --- FILTERING LOGIC --- */
-  const productMatchesCategory = (product: Product, categoryName: string): boolean => {
-    const productCategory = (product.category || '').toLowerCase();
-    const targetCategory = categoryName.toLowerCase();
-    const categoryObj = navCategories.find(c => c.name === categoryName);
-    const keywords = categoryObj?.keywords || [];
-    
-    if (productCategory === targetCategory) return true;
-    if (productCategory.includes(targetCategory)) return true;
-    
-    return keywords.some(keyword => 
-      productCategory.includes(keyword) || product.name.toLowerCase().includes(keyword)
-    );
-  };
+    const handleScroll = () => setIsScrolled(window.scrollY > 50);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const displayProducts = useMemo(() => {
     if (searchQuery) {
-      return products.filter((p) => 
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.category.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+      return products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
     }
     if (selectedCategory) {
-      return products.filter((p) => productMatchesCategory(p, selectedCategory));
+      return products.filter(p => p.category.toLowerCase().includes(selectedCategory.toLowerCase()));
     }
-    return products.slice(0, 4);
+    return products.slice(0, 8);
   }, [products, searchQuery, selectedCategory]);
 
   return (
-    <div className="min-h-screen bg-slate-50">
-       {/* UI implementation goes here... */}
-       <div ref={mainContentRef} className="max-w-7xl mx-auto px-6 py-20">
-          <h2 className="text-4xl font-black mb-12 uppercase tracking-tighter">
-            {selectedCategory || "Featured Equipment"}
-          </h2>
+    <div className="min-h-screen bg-slate-50 font-sans">
+      
+      {/* WHATSAPP FAB */}
+      <div className="fixed bottom-8 right-8 z-[300]">
+        <a href="https://wa.me/254741045143" target="_blank" className="w-16 h-16 bg-green-500 text-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform">
+          <WhatsAppIcon size={32} />
+        </a>
+      </div>
+
+      {/* NAVIGATION BAR - FIXED SYNTAX */}
+      <nav className={`sticky top-0 z-[150] h-24 flex items-center transition-all duration-500 ${isScrolled ? 'bg-white/80 backdrop-blur-xl shadow-sm' : 'bg-transparent'}`}>
+        <div className="max-w-7xl mx-auto px-4 w-full flex items-center justify-between">
+          <Link href="/" onClick={() => { setSelectedCategory(null); setSearchQuery(''); }} className="flex items-center gap-2">
+            <span className="text-2xl font-black tracking-tighter text-slate-900 uppercase">KitchenAll <span className="text-orange-600">Pro</span></span>
+          </Link>
           
-          {loading ? (
-            <p>Loading kitchen solutions...</p>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {displayProducts.map((product) => (
-                <div key={product.id} className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-                  <img src={product.image_url || product.image} alt={product.name} className="w-full h-48 object-cover rounded-2xl mb-4" />
-                  <h3 className="font-bold text-slate-900">{product.name}</h3>
-                  <p className="text-orange-600 font-black">KES {product.price.toLocaleString()}</p>
+          <div className="flex items-center gap-8">
+            <Link href="/contact" className="text-xs font-black uppercase tracking-widest text-slate-900 hover:text-orange-600 transition-colors">Enquiry</Link>
+            <Link href="/login" className="bg-slate-900 text-white px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-orange-600 transition-all">Portal</Link>
+          </div>
+        </div>
+      </nav>
+
+      {/* MAIN CONTENT */}
+      <main ref={mainContentRef} className="max-w-7xl mx-auto px-6 py-20">
+        <div className="mb-12">
+          <h2 className="text-5xl font-black text-slate-900 uppercase tracking-tighter">
+            {selectedCategory || "Professional Equipment"}
+          </h2>
+        </div>
+
+        {loading ? (
+          <div className="grid grid-cols-4 gap-8">
+            {[1,2,3,4].map(i => <div key={i} className="h-80 bg-slate-200 animate-pulse rounded-3xl" />)}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {displayProducts.map((product) => (
+              <motion.div layout key={product.id} className="bg-white group rounded-[2.5rem] border border-slate-100 p-6 hover:shadow-2xl transition-all">
+                <div className="aspect-square rounded-3xl overflow-hidden bg-slate-50 mb-6">
+                  <img src={product.image_url || product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                 </div>
-              ))}
-            </div>
-          )}
-       </div>
+                <h3 className="font-bold text-lg text-slate-900 mb-1">{product.name}</h3>
+                <p className="text-orange-600 font-black text-xl">KES {product.price.toLocaleString()}</p>
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </main>
     </div>
   );
 }
