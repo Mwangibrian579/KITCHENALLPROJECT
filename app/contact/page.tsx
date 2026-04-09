@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState, ChangeEvent, FormEvent } from 'react';
 
 /**
  * KITCHENALL CONTACT PAGE
@@ -19,34 +19,37 @@ export default function ContactPage() {
   });
 
   // 2. UI STATUS STATE
-  const [status, setStatus] = useState('idle'); // 'idle' | 'submitting' | 'success' | 'error'
+  const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Handle Input Changes
-  const handleChange = (e) => {
+  // Handle Input Changes - Added Types for 'e'
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // 3. SUBMISSION HANDLER
-  const handleSubmit = async (e) => {
+  // 3. SUBMISSION HANDLER - Added Type for 'e'
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setStatus('submitting');
     setErrorMessage('');
 
     try {
-      const response = await fetch('http://localhost:8000/api/enquiry', {
+      // NOTE: Replace localhost with your actual production API URL or use a relative path
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/enquiry';
+      
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json' // Ensure Laravel sends JSON
+          'Accept': 'application/json'
         },
         body: JSON.stringify(formData),
       });
 
-      // Check if the response is JSON first
       const contentType = response.headers.get('content-type');
-      let resData = {};
+      let resData: any = {};
+      
       if (contentType && contentType.includes('application/json')) {
         resData = await response.json();
       } else {
@@ -57,7 +60,6 @@ export default function ContactPage() {
         throw new Error(resData.message || 'Failed to submit enquiry.');
       }
 
-      // Success
       setStatus('success');
       setFormData({
         full_name: '',
@@ -68,10 +70,9 @@ export default function ContactPage() {
         message: ''
       });
 
-      // Reset to idle after 5 seconds
       setTimeout(() => setStatus('idle'), 5000);
 
-    } catch (err) {
+    } catch (err: any) {
       console.error("Submission error:", err);
       setStatus('error');
       setErrorMessage(err.message || 'Something went wrong.');
@@ -118,7 +119,6 @@ export default function ContactPage() {
           {/* RIGHT: CONTACT FORM */}
           <div className="lg:w-1/2 bg-slate-900 p-10 md:p-14 rounded-[3.5rem] text-white shadow-2xl shadow-slate-900/20 relative overflow-hidden">
 
-            {/* Success Overlay */}
             {status === 'success' && (
               <div className="absolute inset-0 bg-orange-600 flex flex-col items-center justify-center p-10 text-center z-10 animate-in fade-in duration-300">
                 <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mb-6">
@@ -127,7 +127,7 @@ export default function ContactPage() {
                   </svg>
                 </div>
                 <h3 className="text-3xl font-black uppercase tracking-tighter mb-2">Thank You!</h3>
-                <p className="text-white/80 font-medium">Your enquiry has been sent to our technical team. We will contact you shortly.</p>
+                <p className="text-white/80 font-medium">Your enquiry has been sent to our technical team.</p>
                 <button
                   onClick={() => setStatus('idle')}
                   className="mt-8 bg-white text-orange-600 px-8 py-3 rounded-xl font-bold uppercase text-xs tracking-widest hover:bg-slate-100 transition-colors"
@@ -161,9 +161,12 @@ export default function ContactPage() {
                     onChange={handleChange}
                     type="text"
                     className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 focus:border-orange-600 outline-none transition-all placeholder:text-white/10"
-                    placeholder="Restaurant or Hotel Name"
+                    placeholder="Restaurant Name"
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Email</label>
                   <input
@@ -214,7 +217,7 @@ export default function ContactPage() {
                   onChange={handleChange}
                   rows={4}
                   className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 focus:border-orange-600 outline-none transition-all placeholder:text-white/10"
-                  placeholder="Detail your kitchen requirements..."
+                  placeholder="Detail your requirements..."
                 ></textarea>
               </div>
 
