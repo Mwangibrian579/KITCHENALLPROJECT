@@ -1,9 +1,8 @@
-// Change this:
-experimental: {
-  allowedDevOrigins: ["..."], // DELETE THIS LINE
-}
+import type { NextConfig } from "next";
 
-// To just:
-experimental: {
-  // Other valid keys or leave empty
-}
+const nextConfig: NextConfig = {
+  experimental: {
+  },
+};
+
+export default nextConfig;
